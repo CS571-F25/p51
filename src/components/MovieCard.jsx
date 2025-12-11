@@ -13,7 +13,9 @@ export default function MovieCard({ film }) {
     <Card className="h-100">
       <img src={film.poster} className="card-img-top" alt={`${film.title} (${film.year}) poster`} />
       <Card.Body>
-        <Card.Title as="h3" className="h5">{film.title} <small className="text-muted">({film.year})</small></Card.Title>
+        <Card.Title as="h2" className="h5">
+          {film.title} <small className="text-muted">({film.year})</small>
+        </Card.Title>
         <VenueBadge venueId={film.venue} />
         <p className="mb-1"><strong>When:</strong> {film.date} at {film.time}</p>
         <AccessibilityBadges captions={film.captions} ad={film.ad} />
