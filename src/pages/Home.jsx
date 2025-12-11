@@ -1,41 +1,42 @@
 import React, { useMemo, useState } from 'react'
-import { movies as allMovies } from '../data/movies.js'
 import FiltersBar from '../components/FiltersBar.jsx'
 import MovieGrid from '../components/MovieGrid.jsx'
+import { films } from '../data/films.js'
+import { getAllRatings, getAllWatched } from '../utils/storage.js'
 
 export default function Home() {
   const [query, setQuery] = useState('')
-  const [filters, setFilters] = useState({ start: '', end: '', venue: '', genre: '', rating: '' })
+  const [venue, setVenue] = useState('')
+  const [watched, setWatched] = useState('any') // any | watched | unwatched
+  const [minRating, setMinRating] = useState(0)
 
-  const venues = useMemo(() => [...new Set(allMovies.map(m => m.venue.name))], [])
-  const genres = useMemo(() => [...new Set(allMovies.map(m => m.genre))], [])
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return allMovies.filter(m => {
-      const matchesQ = q === '' || m.title.toLowerCase().includes(q) || m.director.toLowerCase().includes(q)
-      const t = new Date(m.screeningDateTime)
-      const okStart = !filters.start || t >= new Date(filters.start)
-      const okEnd = !filters.end || t <= new Date(filters.end + 'T23:59:59')
-      const okVenue = !filters.venue || m.venue.name === filters.venue
-      const okGenre = !filters.genre || m.genre === filters.genre
-      const okRating = !filters.rating || m.rating === filters.rating
-      return matchesQ && okStart && okEnd && okVenue && okGenre && okRating
+  const items = useMemo(() => {
+    const ratings = getAllRatings()
+    const watchedMap = getAllWatched()
+    return films.filter(f => {
+      const matchesQuery = [f.title, f.director].join(' ').toLowerCase().includes(query.toLowerCase())
+      const matchesVenue = !venue || f.venue === venue
+      const r = Number(ratings[f.id] || 0)
+      const matchesRating = r >= minRating
+      const isW = !!watchedMap[f.id]
+      const matchesWatched =
+        watched === 'any' ? true :
+        watched === 'watched' ? isW :
+        !isW
+      return matchesQuery && matchesVenue && matchesRating && matchesWatched
     })
-  }, [query, filters])
+  }, [query, venue, watched, minRating])
 
   return (
-    <>
-      <h1 className="h3 mb-3">All Free Screenings</h1>
+    <section>
+      <h1 className="mb-3">Free Screenings</h1>
       <FiltersBar
-        query={query}
-        setQuery={setQuery}
-        filters={filters}
-        setFilters={setFilters}
-        venues={venues}
-        genres={genres}
+        query={query} onQuery={setQuery}
+        venue={venue} onVenue={setVenue}
+        watched={watched} onWatched={setWatched}
+        minRating={minRating} onMinRating={setMinRating}
       />
-      <MovieGrid movies={filtered} />
-    </>
+      <MovieGrid films={items} />
+    </section>
   )
 }
